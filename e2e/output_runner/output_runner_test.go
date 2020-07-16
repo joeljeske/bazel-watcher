@@ -90,6 +90,7 @@ func TestOutputRunner(t *testing.T) {
 	e2e.MustWriteFile(t, "overwrite.sh", `
 printf "overwrite1"
 `)
+    ibazel.Kill()
 
 	ibazel.RunWithBazelFixCommands("//:overwrite")
 
@@ -105,12 +106,13 @@ printf "overwrite1"
 	ibazel.ExpectOutput("overwrite1")
 	checkSentinel(t, sentinelFile, "The second run should create a sentinel.")
 
-	// TODO: Figure out why the 2nd invocation doesn't touch the file.
 	// Test that the command is run again.
-	//e2e.MustWriteFile(t, "overwrite.sh", `printf "overwrite2"`)
+	e2e.MustWriteFile(t, "overwrite.sh", `
+printf "overwrite2"
+	`)
 
-	//ibazel.ExpectOutput("overwrite2")
-	//checkSentinel(t, sentinelFile, "The third run should create a sentinel.")
+	ibazel.ExpectOutput("overwrite2")
+	checkSentinel(t, sentinelFile, "The third run should create a sentinel.")
 
 	// Now replace the print and it shouldn't fire.
 	e2e.MustWriteFile(t, "defs.bzl", `
@@ -119,7 +121,8 @@ def fix_deps():
 `)
 
 	ibazel.ExpectOutput("overwrite1")
-	checkNoSentinel(t, sentinelFile, "The third run should not create a sentinel.")
+	checkNoSentinel(t, sentinelFile, "The fourth run should not create a sentinel.")
+	ibazel.Kill()
 }
 
 func TestNotifyWhenInvalidConfig(t *testing.T) {
