@@ -52,6 +52,33 @@ jobs:
           name: ${{ matrix.name }}
           path: ${{ matrix.name }}
 
+  release_npm:
+    runs-on: ubuntu-18.04
+    needs: [build]
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          path: ./npm-staging
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install Bazelisk
+        run: npm --global install @bazel/bazelisk@latest
+
+      - name: Publish NPM Package
+        run: |
+          cp "README.md" "npm-staging/README.md"
+          cp "release/npm/index.js" "npm-staging/index.js"
+          bazel run --config=release "//release/npm" -- "${PWD}/CONTRIBUTORS" > "npm-staging/package.json"
+          echo -n "Publishing to NPM as "
+          grep "version" < "npm-staging/package.json"
+          cd "npm-staging" && find . && npm publish
+
   release_github:
     runs-on: ubuntu-18.04
     needs: [build]
