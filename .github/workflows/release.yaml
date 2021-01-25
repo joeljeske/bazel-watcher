@@ -1,9 +1,8 @@
 name: Build Release Binaries
 
 on:
-  # release:
-  #   types: [created]
-  workflow_dispatch:
+  release:
+    types: [created]
     
 jobs:
   build: 
@@ -52,16 +51,28 @@ jobs:
           name: ${{ matrix.name }}
           path: ${{ matrix.name }}
 
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # this hook param can means we can only use this flow when triggered by a release, not manually
+          upload_url: ${{ github.event.release.upload_url }} 
+          asset_path: ${{ matrix.name }}
+          asset_name: ${{ matrix.name }}
+          asset_content_type: application/octet-stream
+
   release_npm:
     runs-on: ubuntu-18.04
     needs: [build]
     steps:
-      - uses: actions/download-artifact@v2
-        with:
-          path: ./npm-staging
-
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v2
+        with:
+          path: ./npm-staging        
 
       - uses: actions/setup-node@v2
         with:
@@ -78,21 +89,3 @@ jobs:
           echo -n "Publishing to NPM as "
           grep "version" < "npm-staging/package.json"
           cd "npm-staging" && find . && npm publish
-
-  release_github:
-    runs-on: ubuntu-18.04
-    needs: [build]
-    steps:
-      - uses: actions/download-artifact@v2
-      - name: Display structure of downloaded files
-        run: ls -R
-      # - name: Upload Release Asset
-      #   id: upload-release-asset 
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   with:
-      #     upload_url: ${{ github.event.release.upload_url }}
-      #     asset_path: ./ibazel_darwin_amd64
-      #     asset_name: ibazel_darwin_amd64
-      #     asset_content_type: application/octet-stream
