@@ -3,10 +3,10 @@ name: Build macOS Binary Release
 on:
   release:
     types: [created]
-    
+
 jobs:
   build:
-    name: Build iBazel for macOS
+    name: Build ibazel for macOS
     runs-on: macos-latest
     steps:
       - name: Checkout code
