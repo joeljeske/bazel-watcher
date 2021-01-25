@@ -19,40 +19,51 @@ jobs:
     strategy:
       matrix:
         include:
-          - name: ubuntu-16.04
-            os: ubuntu-16.04
+          - os: ubuntu-16.04
             build_flags: >-
               --build_tag_filters=-nolinux
+              --disk_cache=~/.cache/bazel
             test_flags: >-
               --features=race
-              --test_tag_filters=-nolinux    
+              --test_tag_filters=-nolinux
+              --disk_cache=~/.cache/bazel
 
-          - name: ubuntu-18.04
-            os: ubuntu-18.04
+          - os: ubuntu-18.04
             build_flags: >-
               --build_tag_filters=-nolinux
+              --disk_cache=~/.cache/bazel
             test_flags: >-
               --features=race
-              --test_tag_filters=-nolinux          
+              --test_tag_filters=-nolinux
+              --disk_cache=~/.cache/bazel
 
-          - name: macos
-            os: macos-latest
+          - os: macos-latest
             build_flags: >-
               --build_tag_filters=-nomacos
+              --disk_cache=~/.cache/bazel
             test_flags: >-
               --features=race
               --test_tag_filters=-nomacos
-              
+              --disk_cache=~/.cache/bazel
+
           - name: macos-legacy
             os: macos-latest
             build_flags: >-
               --build_tag_filters=-nomacos
+              --disk_cache=~/.cache/bazel
             test_flags: >-
               --features=race
               --test_tag_filters=-nomacos
               --test_env=IBAZEL_USE_LEGACY_WATCHER=1
+              --disk_cache=~/.cache/bazel
 
     steps:
+      - name: Bazel disk cache
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/bazel
+          key: ${{ runner.os }}
+
       - uses: actions/setup-node@v2
         with:
           node-version: '14'
