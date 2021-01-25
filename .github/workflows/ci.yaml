@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  # Triggers the workflow on push or pull request events but only for the master branch
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - name: ubuntu-16.04
+            os: ubuntu-16.04
+            build_flags: >-
+              --build_tag_filters=-nolinux
+            test_flags: >-
+              --features=race
+              --test_tag_filters=-nolinux    
+
+          - name: ubuntu-18.04
+            os: ubuntu-18.04
+            build_flags: >-
+              --build_tag_filters=-nolinux
+            test_flags: >-
+              --features=race
+              --test_tag_filters=-nolinux          
+
+          - name: macos
+            os: macos-latest
+            build_flags: >-
+              --build_tag_filters=-nomacos
+            test_flags: >-
+              --features=race
+              --test_tag_filters=-nomacos
+              
+          - name: macos-legacy
+            os: macos-latest
+            build_flags: >-
+              --build_tag_filters=-nomacos
+            test_flags: >-
+              --features=race
+              --test_tag_filters=-nomacos
+              --test_env=IBAZEL_USE_LEGACY_WATCHER=1
+
+    steps:
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: install bazelisk
+        run: npm --global install @bazel/bazelisk@latest
+
+      - uses: actions/checkout@v2
+
+      - name: Build
+        run: bazel build //... ${{ matrix.build_flags }}
+
+      - name: Test
+        run: bazel test //... ${{ matrix.test_flags }}
